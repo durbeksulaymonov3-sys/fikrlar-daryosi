@@ -1,0 +1,411 @@
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Fikrlar Devori</title>
+<meta name="description" content="Fikringizni devorga yopishtiring va boshqalarning fikrini yoqtiring.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&display=swap">
+<style>
+  /* Dizayn: qorong'i devor, unga yopishtirilgan rangli qog'ozlar. Har bir fikr bitta qog'oz. */
+  :root {
+    color-scheme: light;
+    --board: #eceef3;
+    --ink: #181a22;
+    --muted: #5c6070;
+    --line: #cdd1dc;
+    --pill: #ffffff;
+    --paper-ink: #1f1d18;
+    --n0: #ffe27a;
+    --n1: #ffb6ca;
+    --n2: #a9e8cf;
+    --n3: #a9d5ff;
+    --n4: #d6c5ff;
+    --n5: #ffcb9c;
+    --tape: rgba(255, 255, 255, .55);
+    --shadow: 0 10px 18px -10px rgba(24, 26, 34, .35);
+    --font: "Bricolage Grotesque", system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --board: #14161e; --ink: #f1f2f6; --muted: #9a9fb2; --line: #2b2f3c; --pill: #1e212c;
+      --tape: rgba(255, 255, 255, .28); --shadow: 0 12px 20px -10px rgba(0, 0, 0, .7);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --board: #14161e; --ink: #f1f2f6; --muted: #9a9fb2; --line: #2b2f3c; --pill: #1e212c;
+    --tape: rgba(255, 255, 255, .28); --shadow: 0 12px 20px -10px rgba(0, 0, 0, .7);
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--board); color: var(--ink);
+    font-family: var(--font); font-size: 16px; line-height: 1.5;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 18px 64px;
+  }
+  .wrap { max-width: 1120px; margin: 0 auto; }
+  button, input, textarea { font: inherit; color: inherit; }
+  :focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+
+  .top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .brand { font-weight: 800; letter-spacing: -.01em; }
+  .theme { background: var(--pill); border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px; font-size: .8125rem; font-weight: 600; cursor: pointer; }
+  .theme:hover { border-color: var(--ink); }
+
+  .hero { padding-block: 44px 28px; }
+  h1 {
+    font-weight: 800; font-size: clamp(2.5rem, 9vw, 5.75rem); line-height: .96; letter-spacing: -.035em;
+    margin: 0; max-width: 12ch; text-wrap: balance;
+  }
+  h1 mark { background: var(--n0); color: var(--paper-ink); padding: 0 .12em; border-radius: .12em; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+  .stats { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 26px; }
+  .stat { background: var(--pill); border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px; font-size: .875rem; color: var(--muted); }
+  .stat b { color: var(--ink); font-weight: 800; font-variant-numeric: tabular-nums; margin-right: 4px; }
+
+  .paper {
+    background: var(--n0); color: var(--paper-ink); border-radius: 6px; box-shadow: var(--shadow);
+    position: relative;
+  }
+  .paper::before {
+    content: ""; position: absolute; top: -12px; left: 50%; width: 92px; height: 24px; margin-left: -46px;
+    background: var(--tape); transform: rotate(-3deg); border-radius: 2px; pointer-events: none;
+  }
+
+  .composer { max-width: 560px; margin: 8px 0 52px; padding: 26px 22px 20px; transform: rotate(-1deg); }
+  .composer h2 { margin: 0 0 12px; font-size: 1.25rem; font-weight: 800; letter-spacing: -.01em; }
+  .composer label { display: block; font-size: .75rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; opacity: .7; margin-bottom: 4px; }
+  .field { margin-bottom: 12px; }
+  .composer input[type="text"], .composer textarea {
+    width: 100%; background: rgba(255, 255, 255, .55); color: var(--paper-ink);
+    border: 2px solid transparent; border-radius: 6px; padding: 10px 12px;
+  }
+  .composer textarea { min-height: 104px; resize: vertical; }
+  .composer input[type="text"]:focus, .composer textarea:focus { outline: none; border-color: var(--paper-ink); background: rgba(255, 255, 255, .8); }
+  .composer ::placeholder { color: rgba(31, 29, 24, .5); }
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .count { font-size: .8125rem; font-variant-numeric: tabular-nums; opacity: .7; }
+  .count.warn { opacity: 1; font-weight: 800; color: #a3200a; }
+  .send { background: var(--paper-ink); color: var(--n0); border: 0; border-radius: 999px; padding: 10px 20px; font-weight: 800; cursor: pointer; }
+  .send:hover:not(:disabled) { transform: translateY(-1px); }
+  .send:disabled { opacity: .5; cursor: not-allowed; }
+  .composer :focus-visible { outline-color: var(--paper-ink); }
+  .status { min-height: 1.4em; margin: 10px 0 0; font-size: .875rem; }
+  .status.err { color: #a3200a; font-weight: 700; }
+
+  .wallhead { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 30px; }
+  .wallhead h2 { margin: 0; font-size: 1.5rem; font-weight: 800; letter-spacing: -.02em; }
+  .seg { display: inline-flex; background: var(--pill); border: 1px solid var(--line); border-radius: 999px; padding: 3px; gap: 2px; }
+  .seg button { background: transparent; border: 0; border-radius: 999px; padding: 5px 14px; font-size: .8125rem; font-weight: 700; color: var(--muted); cursor: pointer; }
+  .seg button[aria-pressed="true"] { background: var(--ink); color: var(--board); }
+
+  .wall { list-style: none; margin: 0; padding: 0; columns: 3 260px; column-gap: 28px; }
+  .note { break-inside: avoid; margin: 0 0 34px; padding: 26px 20px 16px; min-width: 0; transition: transform .2s ease; }
+  .note:nth-child(4n+1) { transform: rotate(-1.4deg); }
+  .note:nth-child(4n+2) { transform: rotate(1deg); }
+  .note:nth-child(4n+3) { transform: rotate(-.6deg); }
+  .note:nth-child(4n+4) { transform: rotate(1.6deg); }
+  .note:hover { transform: rotate(0) translateY(-3px); }
+  .c0 { background: var(--n0); } .c1 { background: var(--n1); } .c2 { background: var(--n2); }
+  .c3 { background: var(--n3); } .c4 { background: var(--n4); } .c5 { background: var(--n5); }
+  .note .body { margin: 0 0 16px; font-size: 1.0625rem; line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .note .foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .who { font-weight: 800; font-size: .9375rem; overflow-wrap: anywhere; min-width: 0; }
+  .when { display: block; font-size: .75rem; opacity: .65; font-weight: 600; }
+  .acts { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+  .like { display: inline-flex; align-items: center; gap: 5px; background: rgba(255, 255, 255, .6); color: var(--paper-ink); border: 2px solid transparent; border-radius: 999px; padding: 3px 11px 3px 9px; font-size: .8125rem; font-weight: 800; cursor: pointer; font-variant-numeric: tabular-nums; }
+  .like svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2.2; }
+  .like:hover { border-color: var(--paper-ink); }
+  .like[aria-pressed="true"] { background: var(--paper-ink); color: #fff; }
+  .like[aria-pressed="true"] svg { fill: currentColor; }
+  .del { background: transparent; border: 0; font-size: .75rem; font-weight: 700; cursor: pointer; padding: 3px 6px; border-radius: 6px; opacity: .65; color: var(--paper-ink); }
+  .del:hover { opacity: 1; text-decoration: underline; }
+  .del.sure { opacity: 1; color: #a3200a; }
+  .note :focus-visible { outline-color: var(--paper-ink); }
+
+  .empty { max-width: 420px; padding: 26px 22px; transform: rotate(1deg); margin-top: 8px; }
+  .empty strong { display: block; font-size: 1.25rem; font-weight: 800; margin-bottom: 4px; }
+  .skel { height: 120px; border-radius: 6px; margin-bottom: 28px; opacity: .35; break-inside: avoid; }
+  .retry { margin-top: 12px; background: var(--paper-ink); color: var(--n0); border: 0; border-radius: 999px; padding: 8px 18px; font-weight: 800; cursor: pointer; }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .note { animation: stick .35s cubic-bezier(.2, .9, .3, 1.2) both; }
+    @keyframes stick { from { opacity: 0; translate: 0 -14px; scale: 1.06; } to { opacity: 1; translate: 0 0; scale: 1; } }
+  }
+  @media (prefers-reduced-motion: reduce) { .note, .send { transition: none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <span class="brand">Fikrlar devori</span>
+    <button class="theme" id="theme" type="button">Qorong'i rejim</button>
+  </header>
+
+  <section class="hero">
+    <h1>Fikringizni <mark>devorga</mark> yopishtiring</h1>
+    <div class="stats" aria-live="polite">
+      <span class="stat"><b id="s-total">0</b>fikr</span>
+      <span class="stat"><b id="s-likes">0</b>yoqtirish</span>
+      <span class="stat"><b id="s-people">0</b>ishtirokchi</span>
+    </div>
+  </section>
+
+  <form class="paper composer" id="form" autocomplete="off">
+    <h2>Yangi qog'oz</h2>
+    <div class="field">
+      <label for="name">Ismingiz</label>
+      <input type="text" id="name" maxlength="24" placeholder="Masalan, Dilnoza">
+    </div>
+    <div class="field">
+      <label for="text">Fikringiz</label>
+      <textarea id="text" maxlength="280" placeholder="Nima deb o'ylaysiz?"></textarea>
+    </div>
+    <div class="row">
+      <span class="count" id="count">0 / 280</span>
+      <button class="send" id="send" type="submit">Yopishtirish</button>
+    </div>
+    <p class="status" id="status" role="status"></p>
+  </form>
+
+  <div class="wallhead">
+    <h2>Devor</h2>
+    <div class="seg" role="group" aria-label="Saralash">
+      <button type="button" id="sort-new" aria-pressed="true">Yangilari</button>
+      <button type="button" id="sort-top" aria-pressed="false">Mashhurlari</button>
+    </div>
+  </div>
+  <div id="feed" aria-live="polite"></div>
+</div>
+
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var root = document.documentElement;
+
+  /* ---------- mavzu ---------- */
+  function isDark() {
+    var t = root.getAttribute("data-theme");
+    if (t) return t === "dark";
+    return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+  }
+  function paintThemeBtn() { $("theme").textContent = isDark() ? "Yorug' rejim" : "Qorong'i rejim"; }
+  try { var saved = localStorage.getItem("fd-theme"); if (saved) root.setAttribute("data-theme", saved); } catch (e) {}
+  paintThemeBtn();
+  $("theme").addEventListener("click", function () {
+    var next = isDark() ? "light" : "dark";
+    root.setAttribute("data-theme", next);
+    try { localStorage.setItem("fd-theme", next); } catch (e) {}
+    paintThemeBtn();
+  });
+
+  /* ---------- anonim tashrif identifikatori ---------- */
+  function makeId() {
+    var a = new Uint8Array(12);
+    (window.crypto || window.msCrypto).getRandomValues(a);
+    var s = "";
+    for (var i = 0; i < a.length; i++) s += ("0" + a[i].toString(16)).slice(-2);
+    return s + Date.now().toString(36);
+  }
+  var vid = null;
+  try { vid = localStorage.getItem("fd-vid"); } catch (e) {}
+  if (!vid || !/^[A-Za-z0-9]{16,40}$/.test(vid)) {
+    vid = makeId();
+    try { localStorage.setItem("fd-vid", vid); } catch (e) {}
+  }
+
+  /* ---------- holat ---------- */
+  var comments = [], people = 0;
+  var sort = "new";
+  var loaded = false, failed = false;
+  var pending = {};
+  var sureId = null, sureTimer = null;
+
+  /* ---------- yordamchilar ---------- */
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  }
+  function ago(ts) {
+    var d = Math.max(0, Date.now() - ts), m = Math.floor(d / 60000);
+    if (m < 1) return "hozirgina";
+    if (m < 60) return m + " daqiqa oldin";
+    var h = Math.floor(m / 60);
+    if (h < 24) return h + " soat oldin";
+    var k = Math.floor(h / 24);
+    if (k < 7) return k + " kun oldin";
+    var dt = new Date(ts);
+    var mon = ["yanvar","fevral","mart","aprel","may","iyun","iyul","avgust","sentabr","oktabr","noyabr","dekabr"][dt.getMonth()];
+    return dt.getDate() + " " + mon;
+  }
+  var HEART = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-7.5-4.6-9.2-9.4C1.6 7.6 3.7 4.5 7 4.5c2 0 3.7 1.1 5 3 1.3-1.9 3-3 5-3 3.3 0 5.4 3.1 4.2 6.6-1.7 4.8-9.2 9.4-9.2 9.4z"/></svg>';
+
+  function api(method, body) {
+    var url = "/api" + (method === "GET" ? "?v=" + encodeURIComponent(vid) : "");
+    var opts = { method: method, headers: { "content-type": "application/json" } };
+    if (body) { body.v = vid; opts.body = JSON.stringify(body); }
+    return fetch(url, opts).then(function (r) {
+      return r.json().catch(function () { return {}; }).then(function (j) {
+        if (!r.ok) { var err = new Error("http"); err.status = r.status; err.data = j; throw err; }
+        return j;
+      });
+    });
+  }
+
+  function setStatus(msg, err) { var s = $("status"); s.textContent = msg || ""; s.className = "status" + (err ? " err" : ""); }
+
+  /* ---------- chizish ---------- */
+  function render() {
+    var likesTotal = 0;
+    comments.forEach(function (c) { likesTotal += c.likes; });
+    $("s-total").textContent = comments.length;
+    $("s-likes").textContent = likesTotal;
+    $("s-people").textContent = people;
+
+    var feed = $("feed");
+    feed.textContent = "";
+
+    if (!loaded) {
+      if (failed) {
+        var f = el("div", "paper empty");
+        f.appendChild(el("strong", null, "Serverga ulanib bo'lmadi"));
+        f.appendChild(el("span", null, "Internetni tekshirib, qayta urinib ko'ring."));
+        f.appendChild(document.createElement("br"));
+        var rb = el("button", "retry", "Qayta urinish");
+        rb.type = "button";
+        rb.addEventListener("click", function () { failed = false; render(); load(); });
+        f.appendChild(rb);
+        feed.appendChild(f);
+        return;
+      }
+      var sk = el("div", "wall");
+      for (var i = 0; i < 3; i++) { var s = el("div", "skel c" + i); sk.appendChild(s); }
+      feed.appendChild(sk);
+      return;
+    }
+    if (!comments.length) {
+      var e = el("div", "paper empty c2");
+      e.appendChild(el("strong", null, "Devor hozircha bo'sh"));
+      e.appendChild(el("span", null, "Birinchi qog'ozni siz yopishtiring: yuqoridagi varaqqa fikringizni yozing."));
+      feed.appendChild(e);
+      return;
+    }
+
+    var list = comments.slice();
+    if (sort === "top") list.sort(function (a, b) { return b.likes - a.likes || b.ts - a.ts; });
+    else list.sort(function (a, b) { return b.ts - a.ts || b.id - a.id; });
+
+    var ol = el("ol", "wall");
+    list.forEach(function (c) {
+      var li = el("li", "paper note c" + (c.id % 6));
+      li.appendChild(el("p", "body", c.text));
+
+      var foot = el("div", "foot");
+      var who = el("div", "who", c.name || "Mehmon");
+      who.appendChild(el("span", "when", ago(c.ts)));
+      foot.appendChild(who);
+
+      var acts = el("div", "acts");
+      if (c.mine) {
+        var del = el("button", "del" + (sureId === c.id ? " sure" : ""), sureId === c.id ? "Aniq o'chirilsinmi?" : "O'chirish");
+        del.type = "button";
+        del.addEventListener("click", function () { onDelete(c); });
+        acts.appendChild(del);
+      }
+      var lb = el("button", "like");
+      lb.type = "button";
+      lb.setAttribute("aria-pressed", c.liked ? "true" : "false");
+      lb.setAttribute("aria-label", c.liked ? "Yoqtirishni bekor qilish" : "Yoqtirish");
+      lb.insertAdjacentHTML("afterbegin", HEART);
+      lb.appendChild(el("span", null, String(c.likes)));
+      lb.addEventListener("click", function () { onLike(c); });
+      acts.appendChild(lb);
+      foot.appendChild(acts);
+
+      li.appendChild(foot);
+      ol.appendChild(li);
+    });
+    feed.appendChild(ol);
+  }
+
+  /* ---------- ma'lumot ---------- */
+  function load() {
+    return api("GET").then(function (d) {
+      comments = d.comments || [];
+      people = d.people || 0;
+      loaded = true; failed = false;
+      render();
+    }).catch(function () {
+      if (!loaded) { failed = true; render(); }
+    });
+  }
+
+  function onLike(c) {
+    if (pending["l" + c.id]) return;
+    pending["l" + c.id] = 1;
+    c.liked = !c.liked; c.likes += c.liked ? 1 : -1; render();
+    api("POST", { action: "like", id: c.id }).then(load).catch(function () {
+      setStatus("Yoqtirish saqlanmadi. Keyinroq urinib ko'ring.", true); load();
+    }).then(function () { delete pending["l" + c.id]; });
+  }
+
+  function onDelete(c) {
+    if (sureId !== c.id) {
+      sureId = c.id; clearTimeout(sureTimer);
+      sureTimer = setTimeout(function () { sureId = null; render(); }, 3500);
+      render(); return;
+    }
+    clearTimeout(sureTimer); sureId = null;
+    if (pending["d" + c.id]) return;
+    pending["d" + c.id] = 1;
+    api("POST", { action: "delete", id: c.id }).then(load).catch(function () {
+      setStatus("O'chirib bo'lmadi.", true);
+    }).then(function () { delete pending["d" + c.id]; });
+  }
+
+  /* ---------- forma ---------- */
+  var textEl = $("text"), nameEl = $("name"), sendEl = $("send");
+  try { var sn = localStorage.getItem("fd-name"); if (sn) nameEl.value = sn; } catch (e) {}
+
+  function paintCount() {
+    var n = textEl.value.length, c = $("count");
+    c.textContent = n + " / 280";
+    c.className = "count" + (n > 250 ? " warn" : "");
+  }
+  textEl.addEventListener("input", paintCount);
+
+  $("form").addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    if (sendEl.disabled) return;
+    var text = textEl.value.trim();
+    if (text.length < 2) { setStatus("Fikr juda qisqa. Kamida ikki belgi yozing.", true); return; }
+    var name = nameEl.value.trim() || "Mehmon";
+    try { localStorage.setItem("fd-name", nameEl.value.trim()); } catch (e) {}
+    sendEl.disabled = true; setStatus("Yopishtirilmoqda...");
+    api("POST", { action: "add", name: name, text: text }).then(function () {
+      textEl.value = ""; paintCount(); setStatus("Qog'ozingiz devorga yopishtirildi.");
+      return load();
+    }).catch(function (e) {
+      if (e && e.status === 429) setStatus("Biroz kuting va qayta yuboring.", true);
+      else setStatus("Yuborib bo'lmadi. Birozdan keyin urinib ko'ring.", true);
+    }).then(function () { sendEl.disabled = false; });
+  });
+
+  $("sort-new").addEventListener("click", function () { sort = "new"; $("sort-new").setAttribute("aria-pressed", "true"); $("sort-top").setAttribute("aria-pressed", "false"); render(); });
+  $("sort-top").addEventListener("click", function () { sort = "top"; $("sort-top").setAttribute("aria-pressed", "true"); $("sort-new").setAttribute("aria-pressed", "false"); render(); });
+
+  /* ---------- ishga tushirish ---------- */
+  render();
+  load();
+  setInterval(function () { if (!document.hidden && !Object.keys(pending).length) load(); }, 15000);
+})();
+</script>
+</body>
+</html>
