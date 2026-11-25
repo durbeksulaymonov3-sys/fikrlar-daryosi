@@ -1,42 +1,36 @@
 # Fikrlar Devori
 
-Fikr qoldirish va yoqtirish sahifasi. Sahifa Netlify'da, ma'lumotlar MySQL'da saqlanadi.
+Fikr qoldirish va yoqtirish sahifasi. Sahifa Netlify'da, ma'lumotlar TiDB Cloud'da (MySQL bilan mos) saqlanadi.
 
 ## Tuzilishi
 
 ```
 public/index.html              sahifa
-netlify/functions/api.js       MySQL bilan gaplashadigan funksiya
+netlify/functions/api.mjs      TiDB bilan gaplashadigan funksiya (/api)
 schema.sql                     jadvallar
 netlify.toml, package.json     sozlamalar
 ```
 
 ## O'rnatish
 
-1. **MySQL.** Internetdan ulanish mumkin bo'lgan MySQL bazasi kerak (Netlify funksiyalari bulutda ishlaydi, shuning uchun `localhost` ishlamaydi). Bazada `schema.sql` faylini bir marta ishga tushiring.
+1. **TiDB Cloud.** Bazada `schema.sql` faylini bir marta ishga tushiring (`comments` va `likes` jadvallari).
 
-2. **Yuklash.** Papkani GitHub'ga yuklang va Netlify'da "Add new site, Import an existing project" orqali ulang. Netlify `mysql2` paketini o'zi o'rnatadi. Yoki terminalda:
-   ```
-   npm install
-   npx netlify-cli deploy --prod
-   ```
-
-3. **Muhit o'zgaruvchilari.** Netlify'da Site configuration, Environment variables bo'limiga qo'shing:
+2. **Muhit o'zgaruvchilari.** Netlify'da quyidagilarni qo'shing:
 
    | Nomi | Ma'nosi |
    |---|---|
-   | `DB_HOST` | MySQL server manzili |
-   | `DB_PORT` | port (odatda 3306) |
-   | `DB_USER` | foydalanuvchi |
-   | `DB_PASSWORD` | parol |
-   | `DB_NAME` | baza nomi |
-   | `DB_SSL` | faqat server SSL'siz bo'lsa `false` yozing |
+   | `TIDB_HOST` | TiDB server manzili |
+   | `TIDB_PORT` | port (odatda 4000) |
+   | `TIDB_USER` | foydalanuvchi |
+   | `TIDB_PASSWORD` | parol |
+   | `TIDB_DATABASE` | baza nomi |
    | `ADMIN_KEY` | ixtiyoriy, istalgan fikrni o'chirish uchun maxfiy kalit |
 
-   O'zgaruvchilarni qo'shgach saytni qayta deploy qiling.
+   Ulanish doim TLS orqali (kamida TLS 1.2, sertifikat tekshiriladi). O'zgaruvchilarni o'zgartirgach saytni qayta deploy qiling.
 
 ## Eslatmalar
 
+- Server barcha so'rovlarni parametrli (prepared statement) tarzda bajaradi. Ism 24, fikr 2 dan 280 belgigacha bo'lishi server tomonida tekshiriladi.
 - Foydalanuvchilar ro'yxatdan o'tmaydi. Har bir brauzerga tasodifiy anonim identifikator beriladi, shu orqali bir kishi bir fikrni bir marta yoqtira oladi va faqat o'z fikrini o'chira oladi.
 - Spamga qarshi: bir brauzerdan 10 soniyada bittadan ko'p fikr qabul qilinmaydi.
 - Eng oxirgi 300 ta fikr ko'rsatiladi. Sahifa har 15 soniyada yangilanadi.
