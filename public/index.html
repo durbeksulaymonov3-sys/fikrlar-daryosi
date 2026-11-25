@@ -393,7 +393,11 @@
       textEl.value = ""; paintCount(); setStatus("Qog'ozingiz devorga yopishtirildi.");
       return load();
     }).catch(function (e) {
+      var code = e && e.data && e.data.error;
       if (e && e.status === 429) setStatus("Biroz kuting va qayta yuboring.", true);
+      else if (code === "name_too_long") setStatus("Ism 24 belgidan oshmasligi kerak.", true);
+      else if (code === "text_too_long") setStatus("Fikr 280 belgidan oshmasligi kerak.", true);
+      else if (code === "text_too_short") setStatus("Fikr juda qisqa. Kamida ikki belgi yozing.", true);
       else setStatus("Yuborib bo'lmadi. Birozdan keyin urinib ko'ring.", true);
     }).then(function () { sendEl.disabled = false; });
   });
